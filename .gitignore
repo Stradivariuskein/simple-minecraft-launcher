@@ -1,0 +1,9 @@
+env
+certificates
+compilar
+portablemc-main
+portablemc-main.zip
+env
+certificates/*
+compilar/*
+portablemc-main/*
