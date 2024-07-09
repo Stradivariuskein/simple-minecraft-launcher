@@ -25,6 +25,7 @@ def exec_portablemc():
     nombre_usuario = entry_nombre.get()
     version_juego = combo_version.get()
     moder_manager = combo_moder_manager.get()
+    ram = spinbox_ram.get()
     if moder_manager == "vanilla":
         moder_manager = ""
     else:
@@ -35,6 +36,10 @@ def exec_portablemc():
                    moder_manager+version_juego, "-u", nombre_usuario]
     else:
         comando = [PATH_PORTABLEMC, 'start', moder_manager+version_juego]
+
+    if ram:
+        comando.append('--jvm-args')
+        comando.append(f'-Xmx{ram}G -Xms{ram}G -Xmn768m')
 
     proceso = subprocess.Popen(comando, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True, encoding='utf-8', creationflags=subprocess.CREATE_NO_WINDOW)
@@ -52,12 +57,14 @@ def play():
     nombre_usuario = entry_nombre.get()
     version_juego = combo_version.get()
     moder_manager = combo_moder_manager.get()
+    ram = spinbox_ram.get()
 
     # Datos que quieres guardar
     config_data = {
         'user_name': nombre_usuario,
         'version': version_juego,
-        'mod_manager': moder_manager
+        'mod_manager': moder_manager,
+        'ram': ram
     }
 
     config_file_path = os.path.join(APP_FOLDER, 'config.json')
@@ -67,15 +74,6 @@ def play():
         json.dump(config_data, config_file)
 
     threading.Thread(target=exec_portablemc, daemon=True).start()
-    # if nombre_usuario:
-    #     console_out = subprocess.run(
-    #         [PATH_PORTABLEMC, 'start', version_juego, "-u", nombre_usuario], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8', errors='ignore')
-    # else:
-    #     console_out = subprocess.run(
-    #         [PATH_PORTABLEMC, 'start', version_juego], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8', errors='ignore')
-    print(f"Nombre de usuario: {nombre_usuario}")
-    print(f"Versión del juego: {version_juego}")
-    # print(console_out.stdout)
 
 
 def filter_versions(texto):
@@ -107,7 +105,6 @@ def get_versiones():
 
 
 def get_configs(app_folder):
-    print(f"Ruta de la carpeta: {app_folder}")
     config_file_path = os.path.join(app_folder, 'config.json')
     if os.path.exists(config_file_path):
         with open(config_file_path, 'r') as config_file:
@@ -115,6 +112,10 @@ def get_configs(app_folder):
             entry_nombre.insert(0, config_data['user_name'])
             combo_version.set(config_data['version'])
             combo_moder_manager.set(config_data['mod_manager'])
+            # elimina el valor anterior
+            spinbox_ram.delete(0, "end")
+            # carga el nuevo valor
+            spinbox_ram.insert(0, config_data['ram'])
 
 
 if __name__ == "__main__":
@@ -178,7 +179,18 @@ if __name__ == "__main__":
     combo_moder_manager.state(['readonly'])
 
     canvas.create_window(325, 160, window=combo_moder_manager)
+
+    # Campo numérico para la RAM
+    label_ram = tk.Label(root, text="RAM:", bg='white')
+    canvas.create_window((MIDLE_WIDTH*1.75), 40, window=label_ram)
+    # Ejemplo de límite superior
+    spinbox_ram = tk.Spinbox(root, from_=2, to=64, width=5)
+    canvas.create_window((MIDLE_WIDTH*1.75) - 25, 70, window=spinbox_ram)
+    label_gb = tk.Label(root, text="GB", bg='white')
+    canvas.create_window((MIDLE_WIDTH*1.75) + 25, 70, window=label_gb)
+
     get_configs(APP_FOLDER)
+
     # Botón "Jugar"
     button_jugar = tk.Button(root, text="Jugar", command=play, bg='white')
 
